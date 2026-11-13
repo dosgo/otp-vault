@@ -1,4 +1,6 @@
-# 签名私钥：不要进仓库（尤其公开仓库）。
+# 签名私钥：明文不要进仓库（尤其公开仓库）。
+# 已用 WinZip AES-256 加密为 android/signing-key-encrypted.zip 一并提交，
+# 密码由用户自行保管，不在本仓库中。恢复时把包内 otp-vault.keystore 解压到 android/。
 # 本地打包若缺失，build.py 会自动生成一把新的，但将无法覆盖安装升级旧版 APK。
 android/otp-vault.keystore
 
