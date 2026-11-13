@@ -1,0 +1,14 @@
+# 签名私钥：不要进仓库（尤其公开仓库）。
+# 本地打包若缺失，build.py 会自动生成一把新的，但将无法覆盖安装升级旧版 APK。
+android/otp-vault.keystore
+
+# 测试脚本生成的临时压缩包
+generated-*.zip
+
+# 编辑器 / 系统 / Python 缓存
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

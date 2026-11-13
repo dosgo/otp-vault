@@ -1,0 +1,30 @@
+{
+  "id": "./",
+  "name": "口令宝 · OTP 验证器",
+  "short_name": "口令宝",
+  "description": "本地离线运行的双因素动态验证码管理器，支持扫码添加、倒计时、备份与 PIN 加密锁。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#f5f7fb",
+  "theme_color": "#2563eb",
+  "categories": ["utilities", "productivity", "security"],
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "添加账号",
+      "short_name": "添加",
+      "description": "扫描二维码或手动输入密钥",
+      "url": "./?action=add",
+      "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

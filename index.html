@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="本地离线运行的双因素动态验证码（TOTP）管理器">
+  <meta name="color-scheme" content="light dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="口令宝">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>口令宝 · OTP 验证器</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M7.5 10V7.5a4.5 4.5 0 0 1 9 0V10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="4.5" y="10" width="15" height="10.5" rx="3" fill="currentColor"/><circle cx="12" cy="14.6" r="1.35" fill="#2563eb"/><path d="M12 15.6v2" stroke="#2563eb" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </div>
+        <div class="brand-text"><strong>口令宝</strong><span>本地 OTP 验证器</span></div>
+      </div>
+      <div class="top-actions">
+        <button id="btn-install" class="btn btn-ghost hidden" type="button">
+          <svg viewBox="0 0 24 24" class="ico"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>安装到设备
+        </button>
+        <button id="btn-lock" class="icon-btn" type="button" title="立即锁定" aria-label="立即锁定">
+          <svg viewBox="0 0 24 24" class="ico"><rect x="4.5" y="10" width="15" height="10.5" rx="3"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10"/></svg>
+        </button>
+        <button id="btn-settings" class="icon-btn" type="button" title="设置与备份" aria-label="设置与备份">
+          <svg viewBox="0 0 24 24" class="ico"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a1.5 1.5 0 1 1-2.12 2.12l-.06-.06A1.7 1.7 0 0 0 15.7 19a1.7 1.7 0 0 0-1 1.55V21a1.5 1.5 0 1 1-3 0v-.09A1.7 1.7 0 0 0 10.7 19a1.7 1.7 0 0 0-1.88.34l-.06.06a1.5 1.5 0 1 1-2.12-2.12l.06-.06A1.7 1.7 0 0 0 7 15.3a1.7 1.7 0 0 0-1.55-1H5.4a1.5 1.5 0 1 1 0-3h.09A1.7 1.7 0 0 0 7 10.7a1.7 1.7 0 0 0-.34-1.88l-.06-.06a1.5 1.5 0 1 1 2.12-2.12l.06.06A1.7 1.7 0 0 0 10.7 7a1.7 1.7 0 0 0 1-1.55V5.4a1.5 1.5 0 1 1 3 0v.09A1.7 1.7 0 0 0 15.7 7a1.7 1.7 0 0 0 1.88-.34l.06-.06a1.5 1.5 0 1 1 2.12 2.12l-.06.06A1.7 1.7 0 0 0 19.4 10.7v.1a1.7 1.7 0 0 0 1.55 1h.09a1.5 1.5 0 1 1 0 3h-.09a1.7 1.7 0 0 0-1.55 1Z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="badge"><span class="pulse"></span>纯本地运行 · 离线可用</div>
+          <h1>你的验证码，<br>只在你手里。</h1>
+          <p>添加账号后每 30 秒自动刷新口令。密钥只存在这台设备，不上传任何服务器。</p>
+        </div>
+        <button id="btn-add" class="btn btn-primary btn-lg" type="button">
+          <svg viewBox="0 0 24 24" class="ico"><path d="M12 5v14M5 12h14"/></svg>添加账号
+        </button>
+      </section>
+
+      <div id="install-tip" class="notice hidden">
+        <span id="install-tip-text"></span>
+        <button id="install-tip-close" class="icon-btn tiny" type="button" aria-label="关闭">✕</button>
+      </div>
+
+      <div class="toolbar">
+        <label class="search-box">
+          <svg viewBox="0 0 24 24" class="ico"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+          <input id="search" type="search" placeholder="搜索服务或账号…" autocomplete="off" spellcheck="false">
+        </label>
+        <span id="count" class="count"></span>
+        <button id="btn-hide" class="btn btn-ghost" type="button" title="隐藏 / 显示所有验证码">隐藏</button>
+      </div>
+
+      <div id="list" class="grid" aria-live="polite"></div>
+
+      <section id="empty" class="empty hidden">
+        <div class="empty-art" aria-hidden="true">
+          <svg viewBox="0 0 120 120" fill="none"><rect x="18" y="24" width="84" height="72" rx="18" fill="#e8efff"/><rect x="28" y="34" width="64" height="52" rx="12" fill="#fff"/><circle cx="60" cy="55" r="13" stroke="#2563eb" stroke-width="4"/><path d="M60 47v8l5 3" stroke="#2563eb" stroke-width="4" stroke-linecap="round"/><rect x="42" y="76" width="36" height="4" rx="2" fill="#d5e1fb"/><circle cx="98" cy="30" r="11" fill="#2563eb"/><path d="M98 25v10M93 30h10" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg>
+        </div>
+        <h2>还没有账号</h2>
+        <p>扫描网站「两步验证」页面上的二维码、手动输入 Base32 密钥，或从 Google Authenticator 批量导出账号。</p>
+        <div class="empty-actions">
+          <button class="btn btn-primary" type="button" data-open-add="scan">扫描二维码</button>
+          <button class="btn" type="button" data-open-add="manual">手动输入密钥</button>
+          <button class="btn" type="button" data-open-add="migration">导入谷歌验证器</button>
+        </div>
+        <button class="link-btn" id="btn-demo" type="button">先加载一个演示账号试试看</button>
+      </section>
+
+      <p class="footnote">安全提示：密钥只保存在本设备的本地存储中，不会上传。卸载应用或清除本地数据会一并删除，建议定期在「设置」里导出<strong>加密 ZIP 备份</strong>；启用 PIN 锁后数据会用 AES-GCM 加密。</p>
+    </main>
+  </div>
+
+  <!-- 添加 / 编辑账号 -->
+  <dialog id="dlg-add" class="sheet">
+    <div class="sheet-inner">
+      <header class="sheet-head">
+        <div><h2 id="add-title">添加账号</h2><p>二维码 / 密钥 / otpauth 链接 / 谷歌验证器批量导出</p></div>
+        <button class="icon-btn" type="button" data-close="dlg-add" aria-label="关闭">✕</button>
+      </header>
+      <div class="tabs" role="tablist">
+        <button class="tab active" type="button" data-tab="scan">扫描二维码</button>
+        <button class="tab" type="button" data-tab="manual">手动输入</button>
+        <button class="tab" type="button" data-tab="link">粘贴链接</button>
+        <button class="tab" type="button" data-tab="migration">谷歌迁移</button>
+      </div>
+
+      <div class="tab-panel" data-panel="scan">
+        <div class="scanner">
+          <video id="scan-video" playsinline muted></video>
+          <div class="scan-frame" aria-hidden="true"></div>
+          <div id="scan-status" class="scan-status">点击下方按钮开启摄像头，把二维码放进框内</div>
+        </div>
+        <div class="row-actions">
+          <button id="btn-camera" class="btn" type="button">开启摄像头</button>
+          <label class="btn" for="scan-file">上传二维码图片（可多选）<input id="scan-file" type="file" accept="image/*" multiple hidden></label>
+        </div>
+        <div class="migration-progress hidden">
+          <div class="mp-label"></div>
+          <div class="mp-bar"><i></i></div>
+          <div class="row-actions">
+            <button class="btn btn-primary mp-open" type="button">查看并导入</button>
+            <button class="btn mp-reset" type="button">清空重来</button>
+          </div>
+        </div>
+        <p class="hint">支持网站「两步验证」二维码，也支持 Google Authenticator「转移账号 → 导出账号」的二维码；导出有多张时可一次选中全部截图，或对着另一台手机连续扫。识别完全在本机完成。</p>
+      </div>
+
+      <div class="tab-panel hidden" data-panel="manual">
+        <label class="field"><span>服务名称</span><input id="f-issuer" type="text" placeholder="例如 Amazon / GitHub" autocomplete="off"></label>
+        <label class="field"><span>账号（可选）</span><input id="f-account" type="text" placeholder="例如 seller@example.com" autocomplete="off"></label>
+        <label class="field"><span>密钥 Secret <b>*</b></span><input id="f-secret" type="text" placeholder="例如 JBSWY3DPEHPK3PXP" spellcheck="false" autocomplete="off" autocapitalize="characters"></label>
+        <details class="advanced">
+          <summary>高级选项（算法 / 位数 / 周期）</summary>
+          <div class="form-row">
+            <label class="field"><span>算法</span><select id="f-algorithm"><option value="SHA1">SHA1（默认）</option><option value="SHA256">SHA256</option><option value="SHA512">SHA512</option></select></label>
+            <label class="field"><span>位数</span><select id="f-digits"><option value="6">6 位</option><option value="7">7 位</option><option value="8">8 位</option><option value="9">9 位</option></select></label>
+            <label class="field"><span>周期 / 秒</span><input id="f-period" type="number" value="30" min="1" max="3600"></label>
+          </div>
+        </details>
+        <button id="btn-save-manual" class="btn btn-primary btn-block" type="button">保存账号</button>
+      </div>
+
+      <div class="tab-panel hidden" data-panel="link">
+        <label class="field"><span>otpauth 链接或备份内容</span><textarea id="f-uri" rows="5" spellcheck="false" placeholder="otpauth://totp/GitHub:alice?secret=JBSWY3DPEHPK3PXP&issuer=GitHub"></textarea></label>
+        <p class="hint">可粘贴二维码里的原始文本，也可一次粘贴多条（每行一条）；谷歌导出的 otpauth-migration 链接会自动走批量导入。</p>
+        <button id="btn-save-uri" class="btn btn-primary btn-block" type="button">解析并添加</button>
+      </div>
+
+      <div class="tab-panel hidden" data-panel="migration">
+        <div class="steps">
+          <p><strong>从 Google Authenticator 搬家</strong></p>
+          <ol>
+            <li>在谷歌验证器里点右上角 <b>⋮</b> →「转移账号」→「导出账号」</li>
+            <li>勾选要转移的账号，屏幕会出现一张或几张二维码</li>
+            <li>把二维码截图保存到手机，或直接对着另一台手机的屏幕连续扫</li>
+          </ol>
+          <p class="steps-note">账号多时会分成多张二维码，需要<strong>按顺序全部读完</strong>才会汇总；少读几张也能先导入已读到的部分。</p>
+        </div>
+        <label class="btn btn-block" for="gm-files">选择二维码截图（可多选）<input id="gm-files" type="file" accept="image/*" multiple hidden></label>
+        <label class="field"><span>或粘贴二维码里的原始链接</span><textarea id="gm-links" rows="4" spellcheck="false" placeholder="otpauth-migration://offline?data=...&#10;每行一条，多条分批二维码可一起粘贴"></textarea></label>
+        <button id="btn-gm-parse" class="btn btn-block" type="button">解析这些二维码</button>
+        <p id="gm-status" class="hint">选择截图或粘贴链接后，这里会显示读取进度。</p>
+        <div class="migration-progress hidden">
+          <div class="mp-label"></div>
+          <div class="mp-bar"><i></i></div>
+          <div class="row-actions">
+            <button class="btn btn-primary mp-open" type="button">查看并导入</button>
+            <button class="btn mp-reset" type="button">清空重来</button>
+          </div>
+        </div>
+        <p class="hint">全部在本机解析，不联网、不上传。谷歌导出里的 HOTP（计数器型）与 MD5 账号会标记为「不支持」并跳过，其余都能完整导入。</p>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 设置 -->
+  <dialog id="dlg-settings" class="sheet">
+    <div class="sheet-inner">
+      <header class="sheet-head">
+        <div><h2>设置与数据</h2><p>加密、备份与隐私</p></div>
+        <button class="icon-btn" type="button" data-close="dlg-settings" aria-label="关闭">✕</button>
+      </header>
+
+      <section class="setting">
+        <div class="setting-head"><h3>PIN 加密锁</h3><span id="pin-badge" class="pill">未启用</span></div>
+        <p id="pin-desc" class="setting-desc">开启后，所有密钥会用 PIN 派生的密钥进行 AES-GCM 加密，锁定或重新打开时需要输入 PIN。</p>
+        <div class="inline-form">
+          <input id="pin-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="12" placeholder="设置 4 位以上数字 PIN" autocomplete="new-password">
+          <button id="btn-pin-save" class="btn btn-primary" type="button">启用</button>
+        </div>
+        <button id="btn-pin-remove" class="link-btn hidden" type="button">输入当前 PIN 以关闭加密锁</button>
+      </section>
+
+      <section class="setting">
+        <div class="setting-head"><h3>备份与恢复</h3><span class="pill on">导出已加密</span></div>
+        <p class="setting-desc">导出的 ZIP 会用你设置的密码加密，里面包含全部密钥。密码不会保存在应用里，忘记后无法找回，请单独记好；旧版明文 JSON 备份仍可导入。</p>
+        <div class="row-actions">
+          <button id="btn-export" class="btn" type="button">导出加密备份 ZIP</button>
+          <label class="btn" for="import-file">导入备份<input id="import-file" type="file" accept=".zip,.json,application/zip,application/json" hidden></label>
+        </div>
+      </section>
+
+      <section class="setting">
+        <div class="setting-head"><h3>关于</h3></div>
+        <p class="setting-desc">版本 1.2 · 遵循 RFC 6238（SHA1 / SHA256 / SHA512）· 支持 Google Authenticator 批量导出导入 · 备份支持 AES-256 / ZipCrypto 加密 ZIP · 全部运算在本机完成，应用不向任何服务器发送密钥或验证码。</p>
+      </section>
+
+      <button id="btn-clear" class="btn btn-danger btn-block" type="button">清空所有账号</button>
+    </div>
+  </dialog>
+
+  <!-- 谷歌验证器批量导入预览 -->
+  <dialog id="dlg-migration" class="sheet">
+    <div class="sheet-inner">
+      <header class="sheet-head">
+        <div><h2>从谷歌验证器导入</h2><p id="gm-summary">正在读取二维码…</p></div>
+        <button class="icon-btn" type="button" data-close="dlg-migration" aria-label="关闭">✕</button>
+      </header>
+      <div id="gm-warning" class="notice hidden"></div>
+      <div class="gm-toolbar">
+        <label class="gm-all"><input id="gm-all" type="checkbox">全选可导入账号</label>
+        <span id="gm-count" class="count"></span>
+      </div>
+      <div id="gm-list" class="gm-list"></div>
+      <div class="row-actions gm-actions">
+        <button id="btn-gm-rescan" class="btn" type="button">继续扫码</button>
+        <button id="btn-gm-clear" class="btn" type="button">清空重来</button>
+        <button id="btn-gm-import" class="btn btn-primary" type="button">导入选中账号</button>
+      </div>
+      <p class="hint">导入只会把密钥写入本机存储，不会修改谷歌验证器里的任何数据。已存在的密钥默认不勾选，避免生成重复账号。</p>
+    </div>
+  </dialog>
+
+  <!-- 导出加密备份 -->
+  <dialog id="dlg-export" class="sheet compact">
+    <div class="sheet-inner">
+      <header class="sheet-head">
+        <div><h2>导出加密备份</h2><p>生成一个带密码的 ZIP 文件</p></div>
+        <button class="icon-btn" type="button" data-close="dlg-export" aria-label="关闭">✕</button>
+      </header>
+      <label class="field"><span>备份密码 <b>*</b></span><input id="ex-password" type="password" autocomplete="new-password" placeholder="至少 6 位，建议用更长的密码" spellcheck="false"></label>
+      <label class="field"><span>再输一次密码 <b>*</b></span><input id="ex-password2" type="password" autocomplete="new-password" placeholder="确认密码" spellcheck="false"></label>
+      <div class="choice-group">
+        <label class="choice">
+          <input type="radio" name="ex-mode" value="aes" checked>
+          <span><strong>AES-256（推荐）</strong><small>安全性更高。用 7-Zip / WinRAR / WinZip 打开，Windows 自带解压不支持。</small></span>
+        </label>
+        <label class="choice">
+          <input type="radio" name="ex-mode" value="zipcrypto">
+          <span><strong>兼容模式 ZipCrypto</strong><small>Windows 双击即可输密码解压，兼容性最好，但加密强度较弱。</small></span>
+        </label>
+      </div>
+      <div class="warn-box">密码只在本次导出时使用，不会写入应用、不会上传。请务必单独记住——忘了就只能重新添加账号。</div>
+      <div class="row-actions end">
+        <button id="btn-ex-cancel" class="btn" type="button">取消</button>
+        <button id="btn-ex-save" class="btn btn-primary" type="button">生成加密 ZIP</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 解锁加密备份 -->
+  <dialog id="dlg-zip-pass" class="sheet compact">
+    <div class="sheet-inner">
+      <header class="sheet-head">
+        <div><h2>解锁加密备份</h2><p id="zip-pass-name">加密备份.zip</p></div>
+        <button class="icon-btn" type="button" data-close="dlg-zip-pass" aria-label="关闭">✕</button>
+      </header>
+      <p class="setting-desc">这个备份已加密，请输入导出时设置的密码。解密完全在本机进行。</p>
+      <label class="field"><span>备份密码</span><input id="zip-password" type="password" autocomplete="off" placeholder="输入备份密码" spellcheck="false"></label>
+      <p id="zip-pass-error" class="error hidden"></p>
+      <div class="row-actions end">
+        <button id="btn-zip-cancel" class="btn" type="button">取消</button>
+        <button id="btn-zip-open" class="btn btn-primary" type="button">解锁并导入</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 通用确认框 -->
+  <dialog id="dlg-confirm" class="sheet compact">
+    <div class="sheet-inner">
+      <h2 id="confirm-title">确认操作</h2>
+      <p id="confirm-text" class="setting-desc"></p>
+      <div class="row-actions end">
+        <button id="confirm-cancel" class="btn" type="button">取消</button>
+        <button id="confirm-ok" class="btn btn-danger" type="button">确定</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 锁屏 -->
+  <div id="lock-screen" class="lock-screen hidden">
+    <div class="lock-card">
+      <div class="lock-icon" aria-hidden="true"><svg viewBox="0 0 24 24" class="ico"><rect x="4.5" y="10" width="15" height="10.5" rx="3"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10"/></svg></div>
+      <h2>口令宝已锁定</h2>
+      <p>输入 PIN 解锁你的验证码</p>
+      <input id="unlock-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="12" placeholder="PIN" autocomplete="current-password">
+      <p id="unlock-error" class="error hidden">PIN 不正确，请重试</p>
+      <button id="btn-unlock" class="btn btn-primary btn-block" type="button">解锁</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
